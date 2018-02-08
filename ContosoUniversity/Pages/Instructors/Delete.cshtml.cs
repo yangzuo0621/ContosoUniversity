@@ -40,19 +40,17 @@ namespace ContosoUniversity.Pages.Instructors
 
         public async Task<IActionResult> OnPostAsync(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            Instructor instructor = await _context.Instructors
+                .Include(i => i.CourseAssignments)
+                .SingleAsync(i => i.ID == id);
 
-            Instructor = await _context.Instructors.FindAsync(id);
+            var departments = await _context.Departments
+                .Where(d => d.InstructorID == id)
+                .ToListAsync();
+            departments.ForEach(d => d.InstructorID = null);
+            _context.Instructors.Remove(instructor);
 
-            if (Instructor != null)
-            {
-                _context.Instructors.Remove(Instructor);
-                await _context.SaveChangesAsync();
-            }
-
+            await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
         }
     }
